@@ -10,6 +10,5 @@ import java.util.Optional;
 
 @Repository
 public interface StorageRepository extends JpaRepository<ImageData, Long> {
-    @Query(value = "SELECT * FROM ImageData WHERE name = :imageName", nativeQuery = true)
-    Optional<ImageData> findImageByName(@Param("imageName") String imageName);
+    Optional<ImageData> findByName(String imageName);
 }

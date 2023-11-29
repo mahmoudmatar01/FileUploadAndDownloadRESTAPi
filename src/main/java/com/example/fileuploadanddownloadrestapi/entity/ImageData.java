@@ -18,8 +18,7 @@ public class ImageData {
     private Long id;
     private String name;
     private String type;
-    private String imagePath;
-    @Lob
-    @Column(name = "image_data", length = 1000)
     private byte[] imageData;
+    private String imageUrl;
+
 }

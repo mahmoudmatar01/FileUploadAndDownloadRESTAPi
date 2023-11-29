@@ -1,50 +1,52 @@
 package com.example.fileuploadanddownloadrestapi.service;
-
 import com.example.fileuploadanddownloadrestapi.entity.ImageData;
 import com.example.fileuploadanddownloadrestapi.repository.StorageRepository;
-import com.example.fileuploadanddownloadrestapi.util.ImageUtils;
-import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.Optional;
+import static com.example.fileuploadanddownloadrestapi.util.ImageUtils.compressImage;
+import static com.example.fileuploadanddownloadrestapi.util.ImageUtils.decompressImage;
 
 @Service
-@AllArgsConstructor
 public class StorageService {
+
     private final StorageRepository repository;
 
+    @Autowired
+    public StorageService(StorageRepository repository) {
+        this.repository = repository;
+    }
+
     public String uploadImage(MultipartFile file) throws IOException {
-        String imagePath = generateUniqueImagePath(file.getOriginalFilename());
         ImageData image = repository.save(
                 ImageData.builder()
                         .name(file.getOriginalFilename())
                         .type(file.getContentType())
-                        .imagePath(imagePath)
-                        .imageData(ImageUtils.compressImage(file.getBytes()))
+                        .imageData(compressImage(file.getBytes()))
+                        .imageUrl(generateImageUrl(file.getOriginalFilename()))
                         .build()
         );
 
         if (image != null) {
-            String imageUrl = getImageUrl(imagePath); // Generate the full URL for the image path
-            return "File uploaded successfully: " + imageUrl;
+            return "File uploaded successfully: "+file.getOriginalFilename();
         }
         return "File can't upload";
     }
 
     public byte[] downloadImage(String imageName) {
-        Optional<ImageData> dbImage = repository.findImageByName(imageName);
-        if (dbImage.isPresent()) {
-            return ImageUtils.decompressImage(dbImage.get().getImageData());
-        }
-        return null;
+        Optional<ImageData> dbImage = repository.findByName(imageName);
+        byte[]image=decompressImage(dbImage.get().getImageData());
+        return image;
     }
 
-    private String getImageUrl(String imagePath) {
-        return "http://localhost:5920/" + imagePath;
+    public Optional<ImageData> getImageDataByName(String imageName) {
+        return repository.findByName(imageName);
     }
 
-    private String generateUniqueImagePath(String originalFilename) {
-        return "images/" + System.currentTimeMillis() + "_" + originalFilename;
+    private String generateImageUrl(String imageName) {
+        return "http://localhost:5920/image/" + imageName;
     }
+
 }
